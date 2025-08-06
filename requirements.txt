@@ -1,2 +1,11 @@
 # requirements.txt
 # Abhängigkeiten für das Projekt
+flask
+pandas
+numpy
+scikit-learn
+surprise
+sentence-transformers
+torch
+tqdm
+faiss-cpu
