@@ -1,1 +1,3 @@
-# movie-recs
+# Movie Recommender
+
+Kurze Projektbeschreibung.

@@ -11,6 +11,7 @@
     <OutputPath>.</OutputPath>
     <Name>movie-recs</Name>
     <RootNamespace>movie-recs</RootNamespace>
+    <InterpreterId>MSBuild|.venv|$(MSBuildProjectFullPath)</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,7 +22,38 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="app\api.py" />
+    <Compile Include="app\recommender.py" />
+    <Compile Include="app\store.py" />
+    <Compile Include="app\utils.py" />
     <Compile Include="movie_recs.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include=".venv\">
+      <Id>.venv</Id>
+      <Version>3.13</Version>
+      <Description>.venv (Python 3.13 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="app\" />
+    <Folder Include="app\web\" />
+    <Folder Include="data\" />
+    <Folder Include="data\processed\" />
+    <Folder Include="data\raw\" />
+    <Folder Include="models\" />
+    <Folder Include="scripts\" />
+    <Folder Include="notebooks\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="app\web\app.js" />
+    <Content Include="app\web\index.html" />
+    <Content Include="app\web\styles.css" />
+    <Content Include="requirements.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
