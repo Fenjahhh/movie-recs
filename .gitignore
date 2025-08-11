@@ -361,3 +361,15 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+#meine
+# Python venv & conda envs
+.venv/
+env/
+venv/
+*/env/
+*/.venv/
+*.pyc
+__pycache__/
+.DS_Store
+Thumbs.db

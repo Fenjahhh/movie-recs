@@ -1,0 +1,17 @@
+name: recsys311
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - flask
+  - pandas
+  - numpy
+  - scikit-learn
+  - tqdm
+  - scikit-surprise
+  - pytorch
+  - cpuonly
+  - pip
+  - pip:
+      - sentence-transformers
+      # - faiss-cpu  # lieber conda: conda install -c conda-forge faiss-cpu

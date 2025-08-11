@@ -1,0 +1,5 @@
+Vor dem weiterarbeiten am Projekt machen:
+Projekt-Mappen-Explorer > rechtsklick auf movie-recs projekt> im Terminal öffnen > Dev-Powershell:
+
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+conda activate recsys311
