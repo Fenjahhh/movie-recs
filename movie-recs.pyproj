@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>b6770fd6-b13a-488c-a70c-da9351f79f41</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>app\api.py</StartupFile>
+    <StartupFile>notebooks\01_eda.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -27,6 +27,7 @@
     <Compile Include="app\store.py" />
     <Compile Include="app\utils.py" />
     <Compile Include="movie_recs.py" />
+    <Compile Include="notebooks\01_eda.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="app\" />
@@ -44,6 +45,7 @@
     <Content Include="app\web\index.html" />
     <Content Include="app\web\styles.css" />
     <Content Include="environment.yml" />
+    <Content Include="notebooks\eda_notes.md" />
     <Content Include="requirements.txt" />
   </ItemGroup>
   <ItemGroup>

@@ -1,5 +1,12 @@
 Vor dem weiterarbeiten am Projekt machen:
-Projekt-Mappen-Explorer > rechtsklick auf movie-recs projekt> im Terminal öffnen > Dev-Powershell:
+windows Suche > Anaconda Prompt:
 
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+
+cd C:\Users\gerri\source\repos\movie-recs
 conda activate recsys311
+
+und wenn du neue Pakete installieren willst z.b.:
+
+# In der Anaconda Prompt
+python -m pip install matplotlib
+python -c "import matplotlib; print(matplotlib.__version__)"   # kurzer Check
