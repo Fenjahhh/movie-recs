@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>b6770fd6-b13a-488c-a70c-da9351f79f41</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>notebooks\01_eda.py</StartupFile>
+    <StartupFile>scripts\prepare_movies.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -28,6 +28,7 @@
     <Compile Include="app\utils.py" />
     <Compile Include="movie_recs.py" />
     <Compile Include="notebooks\01_eda.py" />
+    <Compile Include="scripts\prepare_movies.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="app\" />
