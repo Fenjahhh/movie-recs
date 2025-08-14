@@ -10,3 +10,5 @@ und wenn du neue Pakete installieren willst z.b.:
 # In der Anaconda Prompt
 python -m pip install matplotlib
 python -c "import matplotlib; print(matplotlib.__version__)"   # kurzer Check
+pip install pyarrow
+

@@ -90,3 +90,7 @@ print("\nNumber of movies with no genres listed:",
 print("\n=== Movie Titles Examples ===")
 print(movies["title"].sample(10, random_state=42))
 
+ratings.to_parquet("data/processed/ratings_raw.parquet", index=False)
+movies.to_parquet("data/processed/movies_raw.parquet", index=False)
+
+
