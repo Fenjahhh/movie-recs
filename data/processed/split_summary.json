@@ -1,0 +1,30 @@
+{
+  "counts": {
+    "train": 80672,
+    "val": 10093,
+    "test": 10071,
+    "total": 100836
+  },
+  "unique_users": {
+    "train": 610,
+    "val": 610,
+    "test": 610
+  },
+  "unique_movies": {
+    "train": 8983,
+    "val": 3677,
+    "test": 3686
+  },
+  "paths": {
+    "train": "data\\processed\\ratings_train.parquet",
+    "val": "data\\processed\\ratings_val.parquet",
+    "test": "data\\processed\\ratings_test.parquet"
+  },
+  "ratios": {
+    "train": 0.8,
+    "val": 0.1,
+    "test": 0.1
+  },
+  "seed": 42,
+  "min_user_threshold": 5
+}
