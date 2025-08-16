@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>b6770fd6-b13a-488c-a70c-da9351f79f41</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>scripts\personal_content_recs.py</StartupFile>
+    <StartupFile>app\api.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
