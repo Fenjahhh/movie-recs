@@ -4,6 +4,8 @@ from flask import Flask, request, jsonify
 import json, numpy as np, pandas as pd
 from pathlib import Path
 import ast
+import joblib
+from surprise import Dataset, Reader
 
 app = Flask(__name__)
 
@@ -24,6 +26,55 @@ _df_rtrain = None
 _E = None
 _meta = None
 
+_cf_algo = None
+_trainset = None
+
+def _ensure_cf_loaded():
+    global _cf_algo, _trainset
+    if _cf_algo is None:
+        _cf_algo = joblib.load(MODELS_DIR / "cf_svd.pkl")
+    if _trainset is None:
+        # ratings_train laden und Trainset für Surprise bauen
+        rfile = (DATA_PROCESSED / "ratings_train.parquet"
+                 if (DATA_PROCESSED / "ratings_train.parquet").exists()
+                 else DATA_PROCESSED / "ratings_train.csv")
+        df_train = (pd.read_parquet(rfile) if rfile.suffix==".parquet" else pd.read_csv(rfile))
+        reader = Reader(rating_scale=(0.5, 5.0))
+        data = Dataset.load_from_df(df_train[["userId","movieId","rating"]], reader)
+        _trainset = data.build_full_trainset()
+
+def _cf_topn(uid: int, N: int, movies_df: pd.DataFrame):
+    # Sicherstellen, dass User/Items im Trainset existieren
+    try:
+        inner_uid = _trainset.to_inner_uid(uid)
+    except ValueError:
+        return []  # User unbekannt im Train → keine CF-Empfehlungen
+
+    seen_inner = set(j for (j, _) in _trainset.ur[inner_uid])
+    candidates_inner = [j for j in _trainset.all_items() if j not in seen_inner]
+
+    preds = []
+    for j in candidates_inner:
+        iid = int(_trainset.to_raw_iid(j))
+        est = _cf_algo.predict(uid, iid, verbose=False).est
+        preds.append((iid, est))
+
+    preds.sort(key=lambda x: x[1], reverse=True)
+    top = preds[:N]
+    m = movies_df.set_index("movieId")
+
+    results = []
+    for mid, est in top:
+        if mid not in m.index:
+            continue
+        row = m.loc[mid]
+        results.append({
+            "movieId": int(mid),
+            "title": str(row["title"]),
+            "year": int(row["year"]) if "year" in row and pd.notna(row["year"]) else None,
+            "est": float(est)
+        })
+    return results
 # --- Helpers ---
 
 def to_py(obj):
@@ -234,6 +285,24 @@ def recommend_content_personal():
         })
 
     return jsonify({"userId": user_id, "mode": mode, "k": k, "results": to_py(results)})
+
+@app.get("/recommend/cf/personal")
+def recommend_cf_personal():
+    try:
+        _ensure_loaded_content()
+        _ensure_cf_loaded()
+    except FileNotFoundError as e:
+        return jsonify({"error": str(e)}), 500
+
+    try:
+        uid = int(request.args.get("userId", ""))
+    except Exception:
+        return jsonify({"error": "query param 'userId' (int) fehlt"}), 400
+    k_req = int(request.args.get("k", 10))
+    k = max(1, min(k_req, 50))
+
+    results = _cf_topn(uid, k, _df_movies)
+    return jsonify({"userId": uid, "k": k, "results": to_py(results)})
 
 # --- Healthcheck ---
 @app.get("/health")

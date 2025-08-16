@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>b6770fd6-b13a-488c-a70c-da9351f79f41</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>scripts\testing.py</StartupFile>
+    <StartupFile>app\api.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -35,6 +35,7 @@
     <Compile Include="scripts\prepare_movies.py" />
     <Compile Include="scripts\split_ratings.py" />
     <Compile Include="scripts\testing.py" />
+    <Compile Include="scripts\topn_cf_demo.py" />
     <Compile Include="scripts\train_cf.py" />
   </ItemGroup>
   <ItemGroup>
