@@ -5,6 +5,10 @@ windows Suche > Anaconda Prompt:
 cd C:\Users\gerri\source\repos\movie-recs
 conda activate recsys311
 
+(Danach installierst du künftig immer reproduzierbar:)
+(conda env update -n recsys311 -f environment.yml)
+
+
 und wenn du neue Pakete installieren willst z.b.:
 
 # In der Anaconda Prompt

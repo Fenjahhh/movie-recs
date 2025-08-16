@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>b6770fd6-b13a-488c-a70c-da9351f79f41</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>app\api.py</StartupFile>
+    <StartupFile>scripts\testing.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -12,6 +12,8 @@
     <Name>movie-recs</Name>
     <RootNamespace>movie-recs</RootNamespace>
     <InterpreterId>Global|VisualStudio|recsys311</InterpreterId>
+    <SuppressConfigureTestFrameworkPrompt>true</SuppressConfigureTestFrameworkPrompt>
+    <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -33,6 +35,7 @@
     <Compile Include="scripts\prepare_movies.py" />
     <Compile Include="scripts\split_ratings.py" />
     <Compile Include="scripts\testing.py" />
+    <Compile Include="scripts\train_cf.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="app\" />

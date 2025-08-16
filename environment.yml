@@ -5,7 +5,7 @@ dependencies:
   - python=3.11
   - flask
   - pandas
-  - numpy
+  - numpy<2
   - scikit-learn
   - tqdm
   - scikit-surprise
