@@ -43,6 +43,37 @@ def _ensure_cf_loaded():
         data = Dataset.load_from_df(df_train[["userId","movieId","rating"]], reader)
         _trainset = data.build_full_trainset()
 
+def _popular_topn(movies_df: pd.DataFrame, ratings_train_df: pd.DataFrame, N: int = 10, min_count: int = 20):
+    """
+    Beliebte Filme nach gewichteter Bewertung:
+    WR = (v/(v+m))*R + (m/(v+m))*C
+    v=count(movie), R=mean(movie), C=global mean, m=Schwelle (min_count)
+    """
+    grp = ratings_train_df.groupby("movieId")["rating"].agg(["mean", "count"]).rename(columns={"mean":"R","count":"v"})
+    if len(grp) == 0:
+        return []
+
+    C = grp["R"].mean()
+    m = min_count
+    grp["WR"] = (grp["v"]/(grp["v"]+m))*grp["R"] + (m/(grp["v"]+m))*C
+    top = grp.sort_values(["WR","v"], ascending=False).head(N)
+
+    mdf = movies_df.set_index("movieId")
+    out = []
+    for mid, row in top.iterrows():
+        if mid not in mdf.index:
+            continue
+        mrow = mdf.loc[mid]
+        out.append({
+            "movieId": int(mid),
+            "title": str(mrow["title"]),
+            "year": int(mrow["year"]) if "year" in mrow and pd.notna(mrow["year"]) else None,
+            "est": float(row["WR"]),
+            "count": int(row["v"]),
+        })
+    return out
+
+
 def _cf_topn(uid: int, N: int, movies_df: pd.DataFrame):
     # Sicherstellen, dass User/Items im Trainset existieren
     try:
@@ -289,21 +320,44 @@ def recommend_content_personal():
 @app.get("/recommend/cf/personal")
 def recommend_cf_personal():
     try:
-        _ensure_loaded_content()
-        _ensure_cf_loaded()
+        _ensure_loaded_content()  # Movies + Embeddings/Index (Movies brauchen wir hier)
+        _ensure_cf_loaded()       # CF-Modell + Surprise-Trainset
     except FileNotFoundError as e:
         return jsonify({"error": str(e)}), 500
 
+    # Parameter
     try:
         uid = int(request.args.get("userId", ""))
     except Exception:
         return jsonify({"error": "query param 'userId' (int) fehlt"}), 400
-    k_req = int(request.args.get("k", 10))
+
+    try:
+        k_req = int(request.args.get("k", 10))
+    except Exception:
+        k_req = 10
     k = max(1, min(k_req, 50))
 
-    results = _cf_topn(uid, k, _df_movies)
-    return jsonify({"userId": uid, "k": k, "results": to_py(results)})
+    # Wenn User im Trainset bekannt → CF
+    try:
+        _trainset.to_inner_uid(uid)
+        cf_results = _cf_topn(uid, k, _df_movies)
+        if cf_results:
+            return jsonify({"userId": uid, "k": k, "method": "cf", "results": to_py(cf_results)})
+    except ValueError:
+        pass  # user unbekannt → Fallback
 
+    # Fallback: populäre/gute Filme (Cold-Start)
+    # ratings_train laden (wir haben schon _trainset, aber für die Aggregation brauchen wir DataFrame):
+    rfile = (DATA_PROCESSED / "ratings_train.parquet"
+             if (DATA_PROCESSED / "ratings_train.parquet").exists()
+             else DATA_PROCESSED / "ratings_train.csv")
+    df_train = (pd.read_parquet(rfile) if rfile.suffix == ".parquet" else pd.read_csv(rfile))
+    df_train["userId"] = df_train["userId"].astype(int)
+    df_train["movieId"] = df_train["movieId"].astype(int)
+    df_train["rating"]  = df_train["rating"].astype(float)
+
+    pop_results = _popular_topn(_df_movies, df_train, N=k, min_count=20)
+    return jsonify({"userId": uid, "k": k, "method": "popular_fallback", "results": to_py(pop_results)})
 # --- Healthcheck ---
 @app.get("/health")
 def health():
