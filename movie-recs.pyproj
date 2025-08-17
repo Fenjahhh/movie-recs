@@ -40,6 +40,8 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="app\" />
+    <Folder Include="app\static\" />
+    <Folder Include="app\templates\" />
     <Folder Include="app\web\" />
     <Folder Include="data\" />
     <Folder Include="data\processed\" />
@@ -50,6 +52,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include=".gitignore" />
+    <Content Include="app\static\app.js" />
+    <Content Include="app\static\styles.css" />
+    <Content Include="app\templates\base.html" />
+    <Content Include="app\templates\index.html" />
     <Content Include="app\web\app.js" />
     <Content Include="app\web\index.html" />
     <Content Include="app\web\styles.css" />

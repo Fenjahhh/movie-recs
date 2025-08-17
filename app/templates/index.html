@@ -1,0 +1,76 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>Empfehlungen</h1>
+
+<article>
+  <h2>1) Ähnliche Filme (Content)</h2>
+  <form id="form-similar">
+    <div class="grid">
+      <input type="text" id="q" name="q" placeholder="Titel oder Stichwort (z. B. matrix)" required />
+      <input type="number" id="k1" name="k" min="1" max="50" value="10" />
+      <button type="submit">Suchen</button>
+    </div>
+  </form>
+  <div id="similar-results" class="cards"></div>
+</article>
+
+<article>
+  <h2>2) Content-personalisiert</h2>
+  <form id="form-content-personal">
+    <div class="grid">
+      <input type="number" id="userContent" name="userId" placeholder="userId" min="1" required />
+      <select id="mode" name="mode">
+        <option value="pos_only" selected>pos_only (>=minRating)</option>
+        <option value="mixed">mixed (+/-)</option>
+      </select>
+      <input type="number" step="0.1" id="minRating" name="minRating" value="3.5" />
+      <input type="number" id="k2" name="k" min="1" max="50" value="10" />
+      <button type="submit">Empfehlen</button>
+    </div>
+  </form>
+  <div id="content-personal-results" class="cards"></div>
+</article>
+
+<article>
+  <h2>3) CF-personalisiert (SVD)</h2>
+  <form id="form-cf-personal">
+    <div class="grid">
+      <input type="number" id="userCF" name="userId" placeholder="userId" min="1" required />
+      <input type="number" id="k3" name="k" min="1" max="50" value="10" />
+      <button type="submit">Empfehlen</button>
+    </div>
+  </form>
+  <div id="cf-personal-results" class="cards"></div>
+</article>
+
+<article>
+  <h2>4) Hybrid (Content ⨉ CF)</h2>
+  <form id="form-hybrid">
+    <div class="grid">
+      <input type="number" id="userHybrid" name="userId" placeholder="userId" min="1" required />
+      <input type="number" id="k4" name="k" min="1" max="50" value="10" />
+      <input type="number" step="0.1" id="alpha" name="alpha" value="0.6" />
+      <select id="modeHybrid" name="mode">
+        <option value="pos_only" selected>pos_only</option>
+        <option value="mixed">mixed</option>
+      </select>
+      <input type="number" step="0.1" id="minRatingHybrid" name="minRating" value="3.5" />
+    </div>
+    <details>
+      <summary>Filter & Diversity</summary>
+      <div class="grid">
+        <input type="text" id="include" name="include" placeholder="include Genres (Komma)" />
+        <input type="text" id="exclude" name="exclude" placeholder="exclude Genres (Komma)" />
+        <input type="number" id="yearMin" name="yearMin" placeholder="yearMin" />
+        <input type="number" id="yearMax" name="yearMax" placeholder="yearMax" />
+        <input type="number" id="minCount" name="minCount" placeholder="minCount" value="0" />
+        <input type="number" step="0.1" id="mmrLambda" name="mmrLambda" value="0.7" />
+        <input type="number" step="0.1" id="novelty" name="novelty" value="0.0" />
+        <input type="number" id="cand" name="cand" value="200" />
+      </div>
+    </details>
+    <button type="submit">Hybrid empfehlen</button>
+  </form>
+  <div id="hybrid-results" class="cards"></div>
+</article>
+{% endblock %}

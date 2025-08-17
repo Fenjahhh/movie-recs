@@ -1,11 +1,12 @@
 ﻿# api.py
 # Endpunkt-Definitionen für das Movie-Recommender-System
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import json, numpy as np, pandas as pd
 from pathlib import Path
 import ast
 import joblib
 from surprise import Dataset, Reader
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -689,6 +690,9 @@ def recommend_hybrid_personal():
         "results": to_py(results)
     })
 
+@app.get("/")
+def home():
+    return render_template("index.html", title="Movie Recs", year=datetime.now().year)
 
 
 # --- Healthcheck ---

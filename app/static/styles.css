@@ -1,0 +1,13 @@
+.cards {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.card header { margin-bottom: 0.2rem; }
+.card small { display:block; color: var(--muted-color); margin-bottom: 0.4rem; }
+
+.rate .star {
+  border: none; background: transparent; font-size: 1.2rem; cursor: pointer;
+  opacity: 0.5; padding: 0 2px;
+}
+.rate .star.on { opacity: 1; }
