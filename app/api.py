@@ -73,6 +73,28 @@ def _popular_topn(movies_df: pd.DataFrame, ratings_train_df: pd.DataFrame, N: in
         })
     return out
 
+def _cf_estimates_for_items(uid: int, item_ids: list[int]) -> dict[int, float]:
+    """
+    Liefert CF-Schätzungen (est) für eine Liste von movieIds.
+    Gibt nur Items zurück, die im CF-Trainset bekannt sind.
+    """
+    ests = {}
+    # Ist der User im Trainset vorhanden?
+    try:
+        _trainset.to_inner_uid(uid)
+    except ValueError:
+        return ests  # leer -> caller kann Hybrid ohne CF rechnen
+
+    for mid in item_ids:
+        try:
+            # Prüfen, ob Item im Trainset existiert
+            _trainset.to_inner_iid(str(mid))
+        except ValueError:
+            continue  # unbekanntes Item im CF-Trainset
+        est = _cf_algo.predict(uid, int(mid), verbose=False).est
+        ests[int(mid)] = float(est)
+    return ests
+
 
 def _cf_topn(uid: int, N: int, movies_df: pd.DataFrame):
     # Sicherstellen, dass User/Items im Trainset existieren
@@ -358,6 +380,132 @@ def recommend_cf_personal():
 
     pop_results = _popular_topn(_df_movies, df_train, N=k, min_count=20)
     return jsonify({"userId": uid, "k": k, "method": "popular_fallback", "results": to_py(pop_results)})
+
+@app.get("/recommend/hybrid/personal")
+def recommend_hybrid_personal():
+    """
+    Kombiniert Content-Score (Cosine zu User-Embedding) und CF-Score (SVD est).
+    Params:
+      userId (int, required)
+      k (int, default=10)
+      alpha (float in [0,1], default=0.6)  -> Gewicht für CF
+      mode ("pos_only"|"mixed", default="pos_only")
+      minRating (float, default=3.5)
+      cand (int, default=200)  -> Größe des Kandidatenpools aus Content-Top-K
+    Fallbacks:
+      - hat User kein Profil -> Popular-Fallback
+      - keine CF-Schätzungen verfügbar -> nur Content
+    """
+    # Laden
+    try:
+        _ensure_loaded_all()  # Movies + Ratings + Embeddings + Index
+        _ensure_cf_loaded()   # CF-Modell + Surprise-Trainset
+    except FileNotFoundError as e:
+        return jsonify({"error": str(e)}), 500
+
+    # Parameter
+    try:
+        uid = int(request.args.get("userId", ""))
+    except Exception:
+        return jsonify({"error": "query param 'userId' (int) fehlt"}), 400
+
+    def _to_int(x, default):
+        try: return int(x)
+        except: return default
+
+    def _to_float(x, default):
+        try:
+            v = float(x); 
+            return v
+        except:
+            return default
+
+    k_req   = _to_int(request.args.get("k", 10), 10)
+    k       = max(1, min(k_req, 50))
+    alpha   = _to_float(request.args.get("alpha", 0.6), 0.6)
+    alpha   = min(1.0, max(0.0, alpha))
+    mode    = request.args.get("mode", "pos_only")
+    min_r   = _to_float(request.args.get("minRating", 3.5), 3.5)
+    cand    = _to_int(request.args.get("cand", 200), 200)
+    cand    = max(k, min(cand, len(_df_movies)))
+
+    # User-Embedding holen
+    user_vec_res = _build_user_vec_api(uid, mode, min_r)
+    if user_vec_res[0] is None:
+        # Kein Content-Profil -> Popular-Fallback (Cold Start)
+        rfile = (DATA_PROCESSED / "ratings_train.parquet"
+                 if (DATA_PROCESSED / "ratings_train.parquet").exists()
+                 else DATA_PROCESSED / "ratings_train.csv")
+        df_train = (pd.read_parquet(rfile) if rfile.suffix == ".parquet" else pd.read_csv(rfile))
+        df_train["userId"] = df_train["userId"].astype(int)
+        df_train["movieId"] = df_train["movieId"].astype(int)
+        df_train["rating"]  = df_train["rating"].astype(float)
+        pop = _popular_topn(_df_movies, df_train, N=k, min_count=20)
+        return jsonify({"userId": uid, "k": k, "method": "popular_fallback", "results": to_py(pop)})
+
+    user_vec, seen_rows = user_vec_res
+
+    # Content-Scores (Cosine) über alle Items, gesehene ausschließen
+    sims = _E @ user_vec  # Cosine in [-1,1]
+    for r in seen_rows:
+        if 0 <= r < sims.shape[0]:
+            sims[r] = -1e9
+
+    # Kandidaten: Top-cand nach Content
+    cand = max(k, min(cand, sims.shape[0]-len(seen_rows)))
+    idx = np.argpartition(-sims, cand-1)[:cand]
+    idx = idx[np.argsort(-sims[idx])]
+    sims_cand = sims[idx]           # Cosine (roh)
+    mids_cand = [int(_meta["row_to_movieId"][int(i)]) for i in idx]
+
+    # Normalisiere Content: [-1,1] -> [0,1]
+    content_norm = ((sims_cand + 1.0) / 2.0).astype(float)
+
+    # CF-Schätzungen für Kandidaten
+    cf_est = _cf_estimates_for_items(uid, mids_cand)
+    # Normiere CF: [0.5,5.0] -> [0,1]
+    def cf_to_norm(e): return max(0.0, min(1.0, (e - 0.5) / 4.5))
+
+    # Hybrid bilden
+    scores = []
+    for rank, (i_row, mid, c_s) in enumerate(zip(idx, mids_cand, content_norm)):
+        cf_s = cf_est.get(mid, None)
+        if cf_s is None:
+            h = (1.0 - alpha) * c_s  # kein CF -> nur Content-Anteil
+        else:
+            h = alpha * cf_to_norm(cf_s) + (1.0 - alpha) * c_s
+        scores.append((h, c_s, cf_s, int(i_row), int(mid)))
+
+    # sortiere nach Hybrid desc, nimm Top-k
+    scores.sort(key=lambda t: t[0], reverse=True)
+    top = scores[:k]
+
+    # Ausgaben zusammenbauen
+    results = []
+    for h, c_s, cf_s, row_i, mid in top:
+        m = _df_movies.iloc[row_i]
+        results.append({
+            "movieId": int(mid),
+            "title": str(m["title"]),
+            "year": int(m["year"]) if "year" in m and pd.notna(m["year"]) else None,
+            "genres": to_py(_parse_genres(m.get("genres_list", []))),
+            "score": {
+                "hybrid": float(h),
+                "content_norm": float(c_s),
+                "cf_est": float(cf_s) if cf_s is not None else None
+            }
+        })
+
+    return jsonify({
+        "userId": uid,
+        "k": k,
+        "alpha": alpha,
+        "method": "hybrid",
+        "candidates": int(len(scores)),
+        "results": to_py(results)
+    })
+
+
 # --- Healthcheck ---
 @app.get("/health")
 def health():
